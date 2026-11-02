@@ -1,8 +1,34 @@
 import { init } from "./index.js";
 
-const monitor = init({ onIssue(issue) { console.warn(`[netwatch] ${issue.type}: ${issue.method} ${issue.url}`, issue); } });
+globalThis.fetch = async (input, options) => {
+  console.log(`[server] Request: ${input}`);
 
-fetch("/api/users");
-fetch("/api/users");
+  return {
+    ok: true,
+    status: 200,
+  };
+};
 
+// запускаем мониторинг
+const monitor = init({
+  windowMs: 2000,
+  maxEntries: 1000,
+  onIssue(issue) {
+    console.warn(
+      `[netwatch] ${issue.type}: ${issue.method} ${issue.url}`,
+      issue,
+    );
+  },
+});
+
+// отправляем два одинаковых запроса
+await Promise.all([
+  fetch("/api/users"),
+  fetch("/api/user"),
+  fetch("/api/users"),
+]);
+
+// останавливаем мониторинг
 monitor.stop();
+
+console.log("Tests finished");
